@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style>
+			*{padding: 0;margin: 0;}
+			body{font-size: 12px;width: 980px;margin: 0 auto; text-align: left;}
+			.form-select{text-align: left;width:200px;}
+			.form-select-input{position: relative;left: 0;top: 0;height:30px;line-height: 30px;}
+			.form-select-input input{border: 1px solid #999;width: 96%;height:28px;line-height: 28px;padding: 0 3px;}
+			.form-select-input span{width:0; height:0; border:8px solid; border-color: rgba(255,255,255,0);border-top-color:#333;position: absolute;top:40%;right: 5%;cursor: pointer;}
+			.form-select-list{background: #fff;line-height: 28px;border: 1px solid #ccc;position: absolute;min-width: 198px;margin-top:5px;display: none;height:100px;overflow-y: auto;}
+			.form-select-list.active{display: block;}
+			.form-select-list li{list-style: none;padding: 3px 10px;text-align: left;}
+			.form-select-list li:hover{background: #ccc;cursor: pointer;}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<autocomplete :datas='datas' show-length="5" v-model="value" select-names="name" placeholder="请选择" @auto-change="change"></autocomplete>
+
+			<script type="text/template" id="autocomplete">
+				<div class="form-select">
+					<div class="form-select-input">
+						<input :placeholder="placeholder" @input="input" @dblclick="dblclick" v-model.trim="value" />
+						
+					</div>
+					<div class="form-select-list" :class="{active:showFlag}">
+						<ul >
+							<li @click="select(item.data)" v-for="item in items" v-html="item.html"></li>
+						</ul>
+					</div>
+				</div>
+			</script>
+		</div>
+		<script src="js/vue.min.js"></script>
+		<script>
+			new Vue({
+				el:"#app",
+				data:{
+					value:"",
+					datas:[{id:1,name:"路人甲1",age:18,address:"深圳市"},{id:2,name:"路人甲2",age:18,address:"深圳市"},
+					{id:3,name:"路人甲3",age:18,address:"深圳市"},{id:4,name:"路人甲4",age:18,address:"深圳市"},
+					{id:5,name:"路人甲5",age:18,address:"深圳市"},{id:6,name:"路人甲6",age:18,address:"深圳市"},
+					{id:7,name:"路人甲7",age:18,address:"深圳市"}]
+				},
+				methods:{
+					change:function(val,item){
+						console.log(val,item)
+					}
+				},
+				components:{
+					"autocomplete":{
+						template:"#autocomplete",
+						data:function(){
+							return {
+								showFlag:false,
+								value:"",
+								time:null,
+								items:[],
+								names:null
+							}
+						},
+						props:{"placeholder":String,"datas":Array,"selectNames":String,"showLength":Number},
+						methods:{
+							select:function(item){
+								var retStr="";
+								for(var j=0,jj=this.names.length;j<jj;j++){
+									retStr+=item[this.names[j]];
+								}
+								if(retStr!=this.value){
+									this.value=retStr;
+									
+									this.$emit("input",retStr);
+									this.$emit("auto-change",retStr,item);
+								}
+								
+							},
+							dblclick:function(){
+								if(this.value){
+									this.input();
+									return true;
+								}
+								this.items=[];
+								for(var  i=0,ii=this.datas.length;i<ii;i++){
+									var data=this.datas[i];
+									var queryStr="";
+									for(var j=0,jj=this.names.length;j<jj;j++){
+										queryStr+=data[this.names[j]];
+									}
+									var obj={};
+										obj.data=data;
+										obj.html=queryStr;
+										this.items.push(obj);
+										
+									if(i==this.showLength){
+										break;
+									}
+								}
+								this.showFlag=true;
+							},
+							input:function(){
+								var reg,str,_this=this;
+								clearTimeout(_this.time);
+								_this.time=setTimeout(function(){
+									_this.items=[];
+									if(_this.value&&_this.names){
+										
+										reg=new RegExp(_this.value,"i");
+										for(var  i=0,ii=_this.datas.length;i<ii;i++){
+											var data= _this.datas[i],j=0;
+											var queryStr="";
+												for(var j=0,jj=_this.names.length;j<jj;j++){
+													queryStr+=data[_this.names[j]];
+												}
+												
+											var k=0;	
+											var	item=queryStr.replace(reg,function(a){
+												k++;
+												return "<strong>"+a+"</strong>";
+											});
+											
+											if(k>0){
+												var obj={};
+												    obj.data=data;
+													obj.html=item;
+													_this.items.push(obj);
+													
+												if(_this.items.length==this.showLength){
+													break;
+												}
+											}
+										}
+									}
+									
+									_this.showFlag=true;
+								},300);
+							}
+						},
+						created:function(){
+							var _this=this;
+							document.addEventListener("click",function(){
+								if(_this.showFlag==true){
+									_this.showFlag=false;
+								}
+							},false);
+							
+							if(this.selectNames){
+								this.names=this.selectNames.split(",");
+							}
+
+							
+						}
+					}
+				}
+			})
+		</script>
+	</body>
+</html>
